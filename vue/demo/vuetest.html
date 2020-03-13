@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>vue test</title>
+	<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+	<!-- Velocity 和 jQuery.animate 的工作方式类似，也是用来实现 JavaScript 动画的一个很棒的选择 -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
+
+	<style type="text/css">
+		.fade-enter-active, .fade-leave-active {
+				transition: opacity .5s;
+		}
+		.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+				opacity: 0;
+		}
+	</style>
+</head>
+<body>
+	<div id="app"	>
+		插入文本：{{ message }} <br>
+		使用方法： {{ showMessage() }} <br>
+		计算属性：{{ reversedMessage }}<br>
+		<input type="text" v-model="message"><br>
+		<input type="text" v-model="formDate.userName"><br>
+		{{ oneCost | formatCost }}<br>
+		{{ oneCost | formatCost2('￥') }}<br>
+		<button v-on:click="warn('提交！！！', $event)">
+				Submit
+		</button>
+		<br>
+		<input v-focus>
+		<br>
+		<button v-on:click="show = !show">	<!--	!show 的值 赋给变量 show-->
+	 			点击显示或隐藏
+			</button>
+			<transition name="fade">
+				<p v-if="show">显示</p>
+			</transition>
+			<transition
+				v-on:before-enter="beforeEnter"
+				v-on:enter="enter"
+				v-on:leave="leave"
+				v-bind:css="false" >
+				<p v-if="show"> 显示 </p>
+			</transition>
+
+			<custom-button> </custom-button><br>
+
+			<button-counter> </button-counter><br>
+
+			<color-previev color="red" > </color-previev><br>
+
+		<div :style="{ fontSize: postFontSize + 'em' }">
+			<blog-post 
+				v-for="post in posts"
+				v-bind:key="post.id"
+				v-bind:title="post.title"
+				v-bind:price="post.price"
+
+				v-on:enlarge-text="postFontSize += 0.1"
+		></blog-post><br>
+
+		
+		
+		</div>
+
+		组件上使用 v-model	{{ searchText }}
+		父组件：<input v-model="searchText">
+		子组件：<custom-input v-model="searchText"> </custom-input><br>
+
+		<!-- <custom-input
+						v-bind:value="searchText"
+						v-on:input="searchText = $event"
+		></custom-input> -->
+
+		{{ lovingVue }}<base-checkbox v-model="lovingVue"></base-checkbox> <br>
+
+		<div v-bind:class="[{ activeClass: isActive }, errorClass]">
+			111
+		</div>
+
+
+	</div>
+
+	<script type="text/javascript">
+
+	Vue.component('base-checkbox', {
+			model: {
+			prop: 'checked',
+			event: 'change'
+		},
+			props: {
+				checked: Boolean
+		},
+		template: `
+			<input
+				type="checkbox"
+				v-bind:checked="checked"
+				v-on:change="$emit('change', $event.target.checked)"
+			>
+		`
+	})
+
+	Vue.component('custom-input', {
+		props: ['value'],
+			template: `
+				<input
+				v-bind:value="value"
+				v-on:input="$emit('input', $event.target.value)"
+			>
+		`
+	})
+
+Vue.component('button-counter', {
+	data: function () {
+		return {
+			count: 0
+		}
+	},
+	template: '<button v-on:click="count++"> 全局组件 {{ count }}	</button>'
+})
+
+Vue.component('color-previev', {
+	props:['color'],
+	template: '<div :style="style" > 带参数组件 {{ this.color }}	</div>',
+	computed:{
+		style: function() {
+			return {backgroundColor: this.color};
+		}
+	}
+})
+
+Vue.component('blog-post', {
+	props: {
+		title:String,
+		price:{
+				type:Number,
+				required:true,	// 指定是否必须
+				validator : function(val) {
+					console.log(val > 0);
+						return	val > 0; // prop 有效时返回true 无效时返回false	 没有起作用
+				}
+		}
+	},
+	template: ' <div> <h3>{{ title }} {{ price }}</h3>	<button v-on:click="$emit(\'enlarge-text\')" > 控制字体大小 </button> </div>'
+})
+
+		const CustomButton = {
+			data: function () {
+					return {
+							count: 0
+					}
+				},
+			template: '<button @click="count++"> 自定义按钮{{ count }} </button>'
+		}
+
+		 new Vue({
+				el: '#app',
+				components:{
+					CustomButton
+				},
+				data: {
+					message: 'Hello Vue!',
+					formDate:{
+						userName:''
+					},
+					oneCost: 998,
+					show: true,
+					posts: [
+							{ id: 1, title: 'My journey with Vue',price: -1 },
+							{ id: 2, title: 'Blogging with Vue' ,price: 1},
+							{ id: 3, title: 'Why Vue is so fun' ,price: 2}
+					],
+					postFontSize: 1,
+					searchText: '111',
+					lovingVue: true,
+					activeClass: 'active',
+					errorClass: 'text-danger',
+					isActive: true
+				},
+				methods:{
+					showMessage: function() {
+
+						return this.message + " showMessage() " ;
+					},
+					warn: function (message, event) {
+						// 现在我们可以访问原生事件对象
+						if (event) {
+								event.preventDefault()
+						}
+						alert(message)
+					},
+					beforeEnter: function (el) {
+						el.style.opacity = 0
+						el.style.transformOrigin = 'left'
+					},
+					enter: function (el, done) {
+						Velocity(el, { opacity: 1, fontSize: '1.4em' }, { duration: 300 })
+						Velocity(el, { fontSize: '1em' }, { complete: done })
+					},
+					leave: function (el, done) {
+						Velocity(el, { translateX: '15px', rotateZ: '50deg' }, { duration: 600 })
+						Velocity(el, { rotateZ: '100deg' }, { loop: 2 })
+						Velocity(el, {
+							rotateZ: '45deg',
+							translateY: '30px',
+							translateX: '30px',
+							opacity: 0
+							}, { complete: done }
+						)
+					}
+				},
+				computed:{
+					reversedMessage: function () {
+							// `this` 指向 vm 实例
+							return this.message.split('').reverse().join('');
+					}
+				},
+				watch: {
+					// 如果 `message` 发生改变，这个函数就会运行
+					message: function (val, oldVal) {
+							console.log(val, oldVal );
+					},
+					'formDate.userName': function (val, oldVal) {
+							console.log(val, oldVal );
+					},
+					formDate:{
+						handler(val){
+							console.log("val.userName" + val.userName);
+						},
+						deep:true
+					}
+				},
+				filters: {
+					formatCost: function (val) {
+						return '$' + (val/100).toFixed(2);
+					},
+					formatCost2: function (val, symbol) { //带参数过滤器
+						return symbol + (val/100).toFixed(2);
+					}
+				},
+				directives: {
+					focus: {
+						// 指令的定义
+						inserted: function (el) {
+								el.focus()
+						}
+					}
+				}
+			});
+
+		
+	</script>
+</body>
+</html>
